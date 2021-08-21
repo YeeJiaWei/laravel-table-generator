@@ -1,0 +1,26 @@
+{
+    "name": "yeejiawei/laravel-table-generator",
+    "type": "laravel-package",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "YeeJiaWei\\TableGenerator\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yee Jia Wei",
+            "email": "yeejiawei0811@gmail.com"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^8.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "YeeJiaWei\\TableGenerator\\TableGeneratorServiceProvider"
+            ]
+        }
+    }
+}
