@@ -13,6 +13,26 @@ You can install the package via composer:
 composer require yeejiawei/laravel-table-generator
 ```
 
+## Usage
+
+```php
+$category = Category::all();
+$category = Category::paginate();
+
+return TableGenerator::create($category)
+            ->setTableName('Categories')
+            ->setCreatable('category.create')
+            ->addColumn('id')
+            ->addColumn('title')
+            ->addCreatedAtColumns()
+            ->addUpdatedAtColumns()
+            ->setEnable('category.updateEnable')
+            ->setViewable('category.show')
+            ->setEditable('category.edit')
+            ->setDeletable('category.destroy')
+            ->render();
+```
+
 ## Credits
 
 - [YeeJiaWei](https://github.com/YeeJiaWei)
