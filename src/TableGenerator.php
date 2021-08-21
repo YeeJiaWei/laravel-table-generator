@@ -3,10 +3,13 @@
 
 namespace YeeJiaWei\TableGenerator;
 
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 
 class TableGenerator
 {
+    private $layout = 'layouts.app';
+
     private $items;
 
     private $columns;
@@ -35,6 +38,13 @@ class TableGenerator
     public static function create($items)
     {
         return new self($items);
+    }
+
+    public function setLayout(string $layout): TableGenerator
+    {
+        $this->layout = $layout;
+
+        return $this;
     }
 
     public function setTableName(string $name): TableGenerator
@@ -126,19 +136,24 @@ class TableGenerator
 
     public function render()
     {
-        return view('table-generator::table')
+        $this->layout = View::make($this->layout);
+        $this->layout->header = View::make('table-generator::header')
             ->with('table_name', $this->table_name)
+            ->with('creatable', $this->creatable)
+            ->with('create_route_name', $this->create_route_name);
+
+        $this->layout->slot = View::make('table-generator::table')
             ->with('items', $this->items)
             ->with('columns', $this->columns)
             ->with('enable', $this->enable)
             ->with('enable_route_name', $this->enable_route_name)
-            ->with('creatable', $this->creatable)
-            ->with('create_route_name', $this->create_route_name)
             ->with('viewable', $this->viewable)
             ->with('view_route_name', $this->view_route_name)
             ->with('editable', $this->editable)
             ->with('edit_route_name', $this->edit_route_name)
             ->with('deletable', $this->deletable)
             ->with('delete_route_name', $this->delete_route_name);
+
+        return $this->layout;
     }
 }
