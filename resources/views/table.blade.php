@@ -3,19 +3,25 @@
     <div class="bg-white overflow-auto">
         <table class="min-w-full bg-white text-sm">
             <thead class="bg-gray-600 text-white">
-            <tr class="uppercase">
+            <tr class="uppercase px-1.5 py-3">
                 @foreach($columns as $column)
-                    <th class="text-left py-3 px-4">
-                        {{ $column['header'] }}
-                    </th>
+                    @if($column['name'] == 'created_at' || $column['name'] == 'updated_at')
+                        <td class="text-center px-1.5 py-3" style="width: 175px">
+                            {{ $column['header'] }}
+                        </td>
+                    @else
+                        <th class="text-left px-1.5 py-3">
+                            {{ $column['header'] }}
+                        </th>
+                    @endif
                 @endforeach
                 @if($enable)
-                    <th class="text-center py-3 px-4" style="width: 50px">
+                    <th class="text-center px-1.5 py-3" style="width: 50px">
                         Status
                     </th>
                 @endif
                 @if($viewable || $editable || $deletable)
-                    <th class="text-center py-3 px-4" style="width: 150px">
+                    <th class="text-center px-1.5 py-3" style="width: 150px">
                         Actions
                     </th>
                 @endif
@@ -25,17 +31,25 @@
             @foreach($items as $item)
                 <tr>
                     @foreach($columns as $column)
-                        <td class="text-left px-3 py-4">
-                            <div class="{{ $column['class'] }}">
-                                @if($column['name'] == 'created_at' || $column['name'] == 'updated_at')
-                                    {{ $item->{$column['name']}->format($column['format']) }}
-                                @elseif($column['type'] == 'img')
-                                    <img src="{{ $item->{$column['name']} }}" class="w-16">
+                        @if($column['name'] == 'created_at' || $column['name'] == 'updated_at')
+                            <td class="text-center px-1.5 py-3" style="width: 175px">
+                                {{ $item->{$column['name']}->format($column['format']) }}
+                            </td>
+                        @elseif($column['type'] == 'image')
+                            <td class="px-1.5 py-3">
+                                @if($item->{$column['name']})
+                                    <img src="{{ $column['path'] . '/' . $item->{$column['name']} }}" class="h-10">
                                 @else
-                                    {{ $item->{$column['name']} }}
+                                    <img src="{{ $column['no_image'] }}" class="border border-gray-300 h-10">
                                 @endif
-                            </div>
-                        </td>
+                            </td>
+                        @else
+                            <td class="px-1.5 py-3">
+                                <div class="{{ $column['class'] }}">
+                                    {{ $item->{$column['name']} }}
+                                </div>
+                            </td>
+                        @endif
                     @endforeach
                     @if($enable)
                         <td class="px-3 py-4">
@@ -45,7 +59,7 @@
                             </div>
                         </td>
                     @endif
-                    @if($viewable || $editable)
+                    @if($viewable || $editable || $deletable)
                         <td class="px-3 py-4" style="width: 150px">
                             <div class="flex justify-around">
                                 @if($viewable)

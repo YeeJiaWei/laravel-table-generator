@@ -5,6 +5,8 @@ namespace YeeJiaWei\TableGenerator;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Illuminate\View\ComponentAttributeBag;
+use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 
 class TableGenerator
 {
@@ -54,14 +56,13 @@ class TableGenerator
     }
 
     public function addColumn(
-        string $columnName, string $type = 'text',
-        string $classes = null, string $columnHeader = null): TableGenerator
+        string $columnName, string $classes = null, string $columnHeader = null): TableGenerator
     {
         $column = collect([
+            'type' => 'text',
             'header' => $columnHeader ? $columnHeader : Str::of($columnName)->replace('_', ' '),
             'name' => $columnName,
             'class' => $classes,
-            'type' => $type
         ]);
 
         $this->columns = $this->columns->push($column);
@@ -69,26 +70,37 @@ class TableGenerator
         return $this;
     }
 
-    public function addCreatedAtColumns(string $format = null, string $classes = null, string $columnHeader = null): TableGenerator
+    public function addImageColumn(string $columnName, string $path = null, string $header = null)
     {
         $this->columns = $this->columns->push(collect([
-            'header' => $columnHeader ? $columnHeader : 'created at',
-            'name' => 'created_at',
-            'format' => $format ? $format : 'd M Y h:m A',
-            'class' => $classes
+            'type' => 'image',
+            'header' => $header ? $header : 'Image',
+            'name' => $columnName,
+            'path' => $path ? $path : asset('storage'),
+            'no_image' => asset('image/image-not-available.png'),
+            'class' => null,
         ]));
 
         return $this;
     }
 
-    public function addUpdatedAtColumns(string $format = null, string $classes = null, string $columnHeader = null): TableGenerator
+    public function addCreatedAtColumns(string $format = null, string $columnHeader = 'created at'): TableGenerator
     {
-
         $this->columns = $this->columns->push(collect([
-            'header' => $columnHeader ? $columnHeader : 'updated at',
+            'header' => $columnHeader,
+            'name' => 'created_at',
+            'format' => $format ? $format : 'd M Y h:m A',
+        ]));
+
+        return $this;
+    }
+
+    public function addUpdatedAtColumns(string $format = null, string $columnHeader = 'updated at'): TableGenerator
+    {
+        $this->columns = $this->columns->push(collect([
+            'header' => $columnHeader,
             'name' => 'updated_at',
             'format' => $format ? $format : 'd M Y h:m A',
-            'class' => $classes
         ]));
 
         return $this;
