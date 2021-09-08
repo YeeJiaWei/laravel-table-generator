@@ -4,9 +4,9 @@
 namespace YeeJiaWei\TableGenerator;
 
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Str;
-use Illuminate\View\ComponentAttributeBag;
-use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
+use YeeJiaWei\TableGenerator\Column\Column;
+use YeeJiaWei\TableGenerator\Column\DateTimeColumn;
+use YeeJiaWei\TableGenerator\Column\EnableColumn;
 
 class TableGenerator
 {
@@ -55,61 +55,30 @@ class TableGenerator
         return $this;
     }
 
-    public function addColumn(
-        string $columnName, string $classes = null, string $columnHeader = null): TableGenerator
+    public function addColumn(Column $column): TableGenerator
     {
-        $column = collect([
-            'type' => 'text',
-            'header' => $columnHeader ? $columnHeader : Str::of($columnName)->replace('_', ' '),
-            'name' => $columnName,
-            'class' => $classes,
-        ]);
-
         $this->columns = $this->columns->push($column);
 
         return $this;
     }
 
-    public function addImageColumn(string $columnName, string $path = null, string $header = null)
+    public function addCreatedAtColumn(): TableGenerator
     {
-        $this->columns = $this->columns->push(collect([
-            'type' => 'image',
-            'header' => $header ? $header : 'Image',
-            'name' => $columnName,
-            'path' => $path ? $path : asset('storage'),
-            'no_image' => asset('image/image-not-available.png'),
-            'class' => null,
-        ]));
+        $this->columns = $this->columns->push(new DateTimeColumn('created_at'));
 
         return $this;
     }
 
-    public function addCreatedAtColumns(string $format = null, string $columnHeader = 'created at'): TableGenerator
+    public function addUpdatedAtColumn(): TableGenerator
     {
-        $this->columns = $this->columns->push(collect([
-            'header' => $columnHeader,
-            'name' => 'created_at',
-            'format' => $format ? $format : 'd M Y h:m A',
-        ]));
+        $this->columns = $this->columns->push(new DateTimeColumn('updated_at'));
 
         return $this;
     }
 
-    public function addUpdatedAtColumns(string $format = null, string $columnHeader = 'updated at'): TableGenerator
+    public function addEnableColumn(string $routeName): TableGenerator
     {
-        $this->columns = $this->columns->push(collect([
-            'header' => $columnHeader,
-            'name' => 'updated_at',
-            'format' => $format ? $format : 'd M Y h:m A',
-        ]));
-
-        return $this;
-    }
-
-    public function setEnable(string $routeName): TableGenerator
-    {
-        $this->enable_route_name = $routeName;
-        $this->enable = true;
+        $this->columns = $this->columns->push(new EnableColumn('enable', $routeName));
 
         return $this;
     }
