@@ -4,8 +4,8 @@
     @if($create_route_name)
         <div class="flex items-center">
             <a href="{{ route($create_route_name) }}"
-               class="bg-blue-600 rounded-lg text-white px-2.5 py-1">
-                <x-svg.add/>
+               class="bg-blue-600 rounded-lg p-2">
+                <x-blade-icon::create class="w-5 h-5 text-white"/>
             </a>
         </div>
     @endif

@@ -14,7 +14,8 @@
         }
     ],
     "require": {
-        "illuminate/support": "^8.0"
+        "illuminate/support": "^8.0",
+        "yeejiawei/laravel-essential-icon": "^1.0.0"
     },
     "extra": {
         "laravel": {

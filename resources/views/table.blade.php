@@ -84,7 +84,9 @@
                             @endif
                         @endforeach
                         <th>
-                            <button class="bg-green-500 text-white rounded-lg px-5 py-2">Search</button>
+                            <button class="bg-green-500 rounded-lg p-2">
+                                <x-blade-icon::search class="w-5 h-5 text-white"/>
+                            </button>
                         </th>
                     </tr>
                 </form>
@@ -119,15 +121,26 @@
                     @endforeach
                     @if($viewable || $editable || $deletable)
                         <td class="px-3 py-4" style="width: 150px">
-                            <div class="flex justify-around">
+                            <div class="flex justify-center space-x-1.5">
                                 @if($viewable)
-                                    <x-btn.view :href="route($view_route_name, $item)"/>
+                                    <a href="{{ route($view_route_name, $item) }}"
+                                       class="bg-blue-600 rounded-lg p-2">
+                                        <x-blade-icon::view class="w-5 h-5 text-white"/>
+                                    </a>
                                 @endif
                                 @if($editable)
-                                    <x-btn.edit :href="route($edit_route_name, $item)"/>
+                                    <a href="{{ route($edit_route_name, $item) }}"
+                                       class="bg-gray-900 rounded-lg p-2">
+                                        <x-blade-icon::edit class="w-5 h-5 text-white"/>
+                                    </a>
                                 @endif
                                 @if($deletable)
-                                    <x-btn.delete :href="route($delete_route_name, $item)"/>
+                                    <form method="post" action="{{ route($delete_route_name, $item) }}">
+                                        @csrf @method('delete')
+                                        <button type="submit" class="bg-red-600 rounded-lg p-2 ">
+                                            <x-blade-icon::delete class="w-5 h-5 text-white"/>
+                                        </button>
+                                    </form>
                                 @endif
                             </div>
                         </td>
