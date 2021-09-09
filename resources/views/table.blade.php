@@ -1,15 +1,37 @@
-<x-card-admin>
+<x-table-generator::card>
     <x-validation-errors/>
     <div class="bg-white overflow-auto">
         <table class="min-w-full bg-white text-sm">
             <thead class="bg-gray-600 text-white">
             <tr class="uppercase px-1.5 py-3">
                 @foreach($columns as $column)
-                    <td class="text-center px-1.5 py-3">
-                        {{ $column->header }}
-                    </td>
+                    @if(in_array(\YeeJiaWei\TableGenerator\Traits\SortableColumn::class,class_uses($column))
+                        && $column->sortable)
+                        <th class="px-1.5 py-3">
+                            <div class="flex justify-center">
+                                {{ $column->header }}
+                                <a href="{{ request()->url() . '?' . $column->query }}"
+                                   class="pl-1">
+                                    @if(request()->query('order') == 'asc'
+                                        && request()->query('orderBy') == $column->name)
+                                        &#9660;
+                                    @elseif(request()->query('order') == 'desc'
+                                            && request()->query('orderBy') == $column->name)
+                                        &#9650;
+                                    @else
+                                        &#9650;
+                                        &#9660;
+                                    @endif
+                                </a>
+                            </div>
+                        </th>
+                    @else
+                        <th class="text-center px-1.5 py-3">
+                            {{ $column->header }}
+                        </th>
+                    @endif
                 @endforeach
-                @if($viewable || $editable || $deletable)
+                @if($viewable || $editable || $deletable || $hasSearchableColumn)
                     <th class="text-center px-1.5 py-3" style="width: 150px">
                         Actions
                     </th>
@@ -17,51 +39,56 @@
             </tr>
             </thead>
             <tbody class="text-gray-700">
-            <form>
-                <tr>
-                    @foreach($columns as $column)
-                        @if($column instanceof \YeeJiaWei\TableGenerator\Column\ImageColumn)
-                            <th class="px-1.5 py-3">
-                            </th>
-                        @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\TextColumn)
-                            @if($column->searchable)
-                                <th class="px-1.5 py-3">
-                                    <input type="text" class="w-full px-1 py-1 rounded-lg outline-none"
-                                           name="{{ $column->name }}"
-                                           value="{{ request()->query($column->name) }}">
-                                </th>
-                            @else
-                                <th></th>
+            @if($hasSearchableColumn)
+                <form>
+                    <tr>
+                        @foreach(request()->query() as $key => $query)
+                            @if($key == 'page' || $key == 'perPage' || $key == 'order' || $key == 'orderBy')
+                                <input type="hidden" name="{{ $key }}" value="{{ $query }}">
                             @endif
-                        @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\DateTimeColumn)
-                            <th class="text-center px-1.5 py-3">
+                        @endforeach
+                        @foreach($columns as $column)
+                            @if($column instanceof \YeeJiaWei\TableGenerator\Column\ImageColumn)
+                                <th class="px-1.5 py-3">
+                                </th>
+                            @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\TextColumn)
+                                @if($column->searchable)
+                                    <th class="px-1.5 py-3">
+                                        <input type="text" class="w-full px-1 py-1 rounded-lg outline-none"
+                                               name="{{ $column->name }}"
+                                               value="{{ request()->query($column->name) }}">
+                                    </th>
+                                @else
+                                    <th></th>
+                                @endif
+                            @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\DateTimeColumn)
+                                <th class="text-center px-1.5 py-3">
 
-                            </th>
-                        @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\EnableColumn)
-                            <th class="px-1.5 py-3">
-                                <select name="enable" class="w-full px-1 py-1 rounded-lg outline-none">
-                                    <option></option>
-                                    <option @if(request()->query('enable') != '' && request()->query('enable') == 0) selected
-                                            @endif
-                                            value="0">
-                                        Disabled
-                                    </option>
-                                    <option @if(request()->query('enable') != '' && request()->query('enable') == 1) selected
-                                            @endif
-                                            value="1">
-                                        Enabled
-                                    </option>
-                                </select>
-                            </th>
-                        @endif
-                    @endforeach
-                    @if($viewable || $editable || $deletable)
+                                </th>
+                            @elseif($column instanceof \YeeJiaWei\TableGenerator\Column\EnableColumn)
+                                <th class="px-1.5 py-3">
+                                    <select name="enable" class="w-full px-1 py-1 rounded-lg outline-none">
+                                        <option></option>
+                                        <option @if(request()->query('enable') != '' && request()->query('enable') == 0) selected
+                                                @endif
+                                                value="0">
+                                            Disabled
+                                        </option>
+                                        <option @if(request()->query('enable') != '' && request()->query('enable') == 1) selected
+                                                @endif
+                                                value="1">
+                                            Enabled
+                                        </option>
+                                    </select>
+                                </th>
+                            @endif
+                        @endforeach
                         <th>
                             <button class="bg-green-500 text-white rounded-lg px-5 py-2">Search</button>
                         </th>
-                    @endif
-                </tr>
-            </form>
+                    </tr>
+                </form>
+            @endif
             @foreach($items as $item)
                 <tr>
                     @foreach($columns as $column)
@@ -112,6 +139,6 @@
     </div>
 
     @if($items instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        {{ $items->appends(request()->query())->links() }}
+        {{ $items->appends(request()->query())->links('table-generator::pagination')->with(compact('pagination')) }}
     @endif
-</x-card-admin>
+</x-table-generator::card>

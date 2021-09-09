@@ -4,42 +4,42 @@
 namespace YeeJiaWei\TableGenerator;
 
 use Illuminate\Support\Facades\View;
-use YeeJiaWei\TableGenerator\Column\Column;
-use YeeJiaWei\TableGenerator\Column\DateTimeColumn;
-use YeeJiaWei\TableGenerator\Column\EnableColumn;
+use YeeJiaWei\TableGenerator\Column\TextColumn;
+use YeeJiaWei\TableGenerator\Traits\HasActions;
+use YeeJiaWei\TableGenerator\Traits\HasColumns;
 
 class TableGenerator
 {
+    use HasColumns {
+        HasColumns::__construct as private __hasColumnConstruct;
+    }
+
+    use HasActions;
+
     private $layout = 'layouts.app';
 
-    private $items;
+    private $builder;
 
-    private $columns;
+    private $pagination;
 
     private $table_name = 'Table';
 
-    private $enable = false;
-    private $enable_route_name;
-    private $creatable = false;
-    private $create_route_name;
-    private $viewable = false;
-    private $view_route_name;
-    private $editable = false;
-    private $edit_route_name;
-    private $deletable = false;
-    private $delete_route_name;
-
-    public function __construct($items)
+    public function __construct($builder)
     {
-        $this->items = $items;
-        $this->columns = collect();
+        $this->__hasColumnConstruct();
+        $this->builder = $builder;
+        $this->query = request()->query();
 
         return $this;
     }
 
-    public static function create($items)
+    public static function create($builder)
     {
-        return new self($items);
+        if ($builder instanceof \Illuminate\Database\Query\Builder
+            || $builder instanceof \Illuminate\Database\Eloquent\Builder)
+            return new self($builder);
+
+        throw new \Exception("Must be 'Query\Builder' or 'Eloquent\Builder'");
     }
 
     public function setLayout(string $layout): TableGenerator
@@ -55,79 +55,66 @@ class TableGenerator
         return $this;
     }
 
-    public function addColumn(Column $column): TableGenerator
+    public function pagination()
     {
-        $this->columns = $this->columns->push($column);
+        $pagination = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $pagination[$i * 20] = http_build_query(
+                array_merge(request()->query(), ['perPage' => $i * 20])
+            );
+        }
 
-        return $this;
-    }
-
-    public function addCreatedAtColumn(): TableGenerator
-    {
-        $this->columns = $this->columns->push(new DateTimeColumn('created_at'));
-
-        return $this;
-    }
-
-    public function addUpdatedAtColumn(): TableGenerator
-    {
-        $this->columns = $this->columns->push(new DateTimeColumn('updated_at'));
-
-        return $this;
-    }
-
-    public function addEnableColumn(string $routeName): TableGenerator
-    {
-        $this->columns = $this->columns->push(new EnableColumn('enable', $routeName));
-
-        return $this;
-    }
-
-    public function setCreatable(string $routeName): TableGenerator
-    {
-        $this->create_route_name = $routeName;
-        $this->creatable = true;
-
-        return $this;
-    }
-
-    public function setViewable(string $routeName): TableGenerator
-    {
-        $this->view_route_name = $routeName;
-        $this->viewable = true;
-
-        return $this;
-    }
-
-    public function setEditable(string $routeName): TableGenerator
-    {
-        $this->edit_route_name = $routeName;
-        $this->editable = true;
-
-        return $this;
-    }
-
-    public function setDeletable(string $routeName): TableGenerator
-    {
-        $this->delete_route_name = $routeName;
-        $this->deletable = true;
-
-        return $this;
+        return $pagination;
     }
 
     public function render()
     {
+        $hasSearchableColumn = !!$this->columns->first(function ($value) {
+            if ($value instanceof TextColumn)
+                return $value->searchable;
+            return false;
+        });
+
+        if ($hasSearchableColumn) {
+            foreach (request()->query() as $column => $value) {
+                if ($column == 'page' || $column == 'perPage' || $column == 'order' || $column == 'orderBy')
+                    continue;
+
+                if (str_contains($column, '-')) {
+                    $c = explode('-', $column);
+
+                    $this->builder = $this->builder->whereHas($c[0], function ($query) use ($value, $c) {
+                        $query->where($c[1], 'like', '%' . $value . '%');
+                    });
+
+                } elseif ($value != null) {
+                    if ($column == 'enable') {
+                        $this->builder = $this->builder->where($column, (bool)$value);
+                    } else {
+                        $this->builder = $this->builder->where($column, 'like', '%' . $value . '%');
+                    }
+                }
+            }
+        }
+
         $this->layout = View::make($this->layout);
         $this->layout->header = View::make('table-generator::header')
             ->with('table_name', $this->table_name)
             ->with('creatable', $this->creatable)
             ->with('create_route_name', $this->create_route_name);
 
+        $items = $this->builder
+            ->orderBy(
+                request()->query('orderBy') ?: 'created_at',
+                request()->query('order') ?: 'desc'
+            )
+            ->paginate(request()->query('perPage') ?: '20');
+
         $this->layout->slot = View::make('table-generator::table')
-            ->with('items', $this->items)
+            ->with('items', $items)
+            ->with('hasSearchableColumn', $hasSearchableColumn)
+            ->with('pagination', $this->pagination())
             ->with('columns', $this->columns)
-            ->with('enable', $this->enable)
-            ->with('enable_route_name', $this->enable_route_name)
             ->with('viewable', $this->viewable)
             ->with('view_route_name', $this->view_route_name)
             ->with('editable', $this->editable)
